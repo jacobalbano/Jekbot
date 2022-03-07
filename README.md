@@ -1,0 +1,2 @@
+# Jekbot
+Personal discord bot
