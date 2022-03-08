@@ -1,3 +1,6 @@
+mod config;
+use config::BotConfig;
+
 use serenity::async_trait;
 use serenity::client::{Client, Context, EventHandler};
 use serenity::model::channel::Message;
@@ -9,8 +12,6 @@ use serenity::framework::standard::{
         group
     }
 };
-
-use std::env;
 
 #[group]
 #[commands(ping)]
@@ -28,8 +29,8 @@ async fn main() {
         .group(&GENERAL_GROUP);
 
     // Login with a bot token from the environment
-    let token = env::var("DISCORD_TOKEN").expect("token");
-    let mut client = Client::builder(token)
+    let config = BotConfig::from_file();
+    let mut client = Client::builder(config.token)
         .event_handler(Handler)
         .framework(framework)
         .await
