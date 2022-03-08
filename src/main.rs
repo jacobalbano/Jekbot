@@ -1,6 +1,7 @@
 mod config;
 use config::BotConfig;
 
+use std::env;
 use serenity::async_trait;
 use serenity::client::{Client, Context, EventHandler};
 use serenity::model::channel::Message;
@@ -14,7 +15,7 @@ use serenity::framework::standard::{
 };
 
 #[group]
-#[commands(ping)]
+#[commands(ping, info)]
 struct General;
 
 struct Handler;
@@ -46,5 +47,11 @@ async fn main() {
 async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
     msg.reply(ctx, "Pong!").await?;
 
+    Ok(())
+}
+
+#[command]
+async fn info(ctx: &Context, msg:&Message) -> CommandResult {
+    msg.reply(ctx, env::consts::OS).await?;
     Ok(())
 }
