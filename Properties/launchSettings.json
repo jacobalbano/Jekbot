@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Jekbot": {
+      "commandName": "Project",
+      "workingDirectory": "$(ProjectDir)"
+    }
+  }
+}
