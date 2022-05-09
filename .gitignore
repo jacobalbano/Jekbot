@@ -1,4 +1,4 @@
-/config.json
-/bin/Debug/net6.0
-/obj
 /.vs/Jekbot
+/bin
+/obj
+/prepared

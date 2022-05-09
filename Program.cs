@@ -1,49 +1,59 @@
 using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
+using Jekbot.Modules;
 using Jekbot.Resources;
+using Jekbot.TypeConverters;
+using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Jekbot;
 
 public class Program
 {
-    public static Task Main(string[] args) => new Program().MainAsync();
-
-    public async Task MainAsync()
+    static void Main(string[] args)
     {
-        var config = ConfigFile.Prepare();
-        using var db = Database.Prepare();
+        RunAsync().GetAwaiter().GetResult();
+    }
 
-        var client = new DiscordSocketClient();
-        client.Log += Log;
+    static async Task RunAsync()
+    {
+        using var services = ConfigureServices();
 
-        client.ReactionAdded += Client_ReactionAdded;
-        
-        client.GuildScheduledEventCreated += Client_GuildScheduledEventCreated;
-        client.GuildScheduledEventCancelled += Client_GuildScheduledEventCancelled;
+        var client = services.GetRequiredService<DiscordSocketClient>();
+        var commands = services.GetRequiredService<InteractionService>();
+        var config = services.GetRequiredService<ConfigFile>();
+        var handler = services.GetRequiredService<CommandHandler>();
+
+        // Registering a concrete type TypeConverter
+        commands.AddTypeConverter<GuildPermissions>(new GuildPermissionsTypeConverter());
+
+        await handler.Initialize();
 
         await client.LoginAsync(TokenType.Bot, config.Token);
+
+        client.Log += (msg) =>
+        {
+            Console.WriteLine(msg.ToString());
+            return Task.CompletedTask;
+        };
+
+        commands.Log += (msg) =>
+        {
+            Console.WriteLine(msg.ToString());
+            return Task.CompletedTask;
+        };
+
         await client.StartAsync();
-        await Task.Delay(-1);
+        await Task.Delay(Timeout.Infinite);
     }
 
-    private Task Client_GuildScheduledEventCancelled(SocketGuildEvent arg)
-    {
-        throw new NotImplementedException();
-    }
-
-    private Task Client_GuildScheduledEventCreated(SocketGuildEvent arg)
-    {
-        throw new NotImplementedException();
-    }
-
-    private Task Client_ReactionAdded(Cacheable<IUserMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2, SocketReaction arg3)
-    {
-        throw new NotImplementedException();
-    }
-
-    private Task Log(LogMessage msg)
-    {
-        Console.WriteLine(msg.ToString());
-        return Task.CompletedTask;
-    }
+    static ServiceProvider ConfigureServices() =>
+        new ServiceCollection()
+        .AddSingleton<DiscordSocketClient>()
+        .AddSingleton(ConfigFile.Prepare())
+        .AddSingleton<InteractionService>()
+        .AddSingleton<CommandHandler>()
+        //.AddSingleton<PerfectlyRealisticDB>()
+        .BuildServiceProvider();
 }

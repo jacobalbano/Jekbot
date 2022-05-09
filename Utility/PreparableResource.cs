@@ -8,7 +8,7 @@ namespace Jekbot.Utility
 {
     public interface IFactory<TResource>
     {
-        TResource Create();
+        TResource Create(ResourceEnvironment environment);
     }
 
     public abstract class PreparableResource<TSelf, TFactory>
@@ -17,9 +17,10 @@ namespace Jekbot.Utility
     {
         public static TSelf Prepare()
         {
-            return factory.Create();
+            return factory.Create(environment);
         }
 
         private static readonly TFactory factory = new();
+        private static ResourceEnvironment environment = new();
     }
 }

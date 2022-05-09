@@ -1,4 +1,5 @@
-﻿using Jekbot.Utility;
+﻿using Jekbot.Models;
+using Jekbot.Utility;
 using LiteDB;
 using System;
 using System.Collections.Generic;
@@ -8,43 +9,47 @@ using System.Threading.Tasks;
 
 namespace Jekbot.Resources
 {
-    internal class Database : PreparableResource<Database, Database.Factory>, IDisposable
+    public class Database : PreparableResource<Database, Database.Factory>, Disposable.Contract
     {
-        private bool disposedValue;
-
-        public class Factory : IFactory<Database>
+        private Database(string connectionStr)
         {
-            Database IFactory<Database>.Create() => new Database(DatabaseName);
-
-            private const string DatabaseName = "jekbot.db";
+            DB = new LiteDatabase(connectionStr);
         }
 
-        private Database(string dbLocation)
+        public IEnumerable<ActionTimer> GetPassedTimers()
         {
-            database = new LiteDatabase(dbLocation);
-        }
+            var col = DB.GetCollection<ActionTimer>();
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
+            var list = col.Query()
+                .Where(x => !x.Processed && x.ExpirationUtc <= DateTime.UtcNow)
+                .ToList();
+
+            foreach (var timer in list)
             {
-                if (disposing)
-                {
-                    database.Dispose();
-                    database = null;
-                }
+                yield return timer;
 
-                disposedValue = true;
+                timer.Processed = true;
+                col.Update(timer);
             }
         }
 
-        void IDisposable.Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+        private readonly LiteDatabase DB;
 
-        LiteDatabase? database;
+#region disposable
+        bool Disposable.Contract.Disposed { get; set; }
+
+        void Disposable.Contract.DisposeOnce()
+        {
+            //if (_database != null)
+            //    _database.Dispose();
+            //_database = null;
+        }
+#endregion
+
+        public class Factory : IFactory<Database>
+        {
+            Database IFactory<Database>.Create(ResourceEnvironment environment) => new Database(environment.GetPath(DatabaseName));
+            private const string DatabaseName = "jekbot.db";
+        }
     }
 }

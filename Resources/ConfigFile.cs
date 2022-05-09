@@ -9,15 +9,16 @@ namespace Jekbot.Resources
     >
     {
         public string Token { get; set; } = "__CUSTOMIZE__";
+        public int TickMilliseconds { get; set; } = 1000;
         
         public class Factory : IFactory<ConfigFile>
         {
-
-            ConfigFile IFactory<ConfigFile>.Create()
+            ConfigFile IFactory<ConfigFile>.Create(ResourceEnvironment environment)
             {
-                if (File.Exists(ConfigFileName))
+                var path = environment.GetPath(ConfigFileName);
+                if (File.Exists(path))
                 {
-                    var contents = File.ReadAllText(ConfigFileName);
+                    var contents = File.ReadAllText(path);
                     var config = JsonSerializer.Deserialize<ConfigFile>(contents);
                     if (config != null)
                         return config;
@@ -26,7 +27,7 @@ namespace Jekbot.Resources
                 try { File.WriteAllText(ConfigFileName, JsonSerializer.Serialize(new ConfigFile())); }
                 finally
                 {
-                    throw new Exception($"Unable to load a config file from '{ConfigFileName}'. A template file has been created.");
+                    throw new Exception($"Unable to load a config file from '{path}'. A template file has been created.");
                 }
             }
 
