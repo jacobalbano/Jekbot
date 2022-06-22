@@ -1,22 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Jekbot.TypeConverters;
+using NodaTime;
+using System.Text.Json.Serialization;
 
 namespace Jekbot.Models
 {
-    [Flags]
+    [Flags, JsonConverter(typeof(JsonStringEnumConverter))]
     public enum ActionTimerType : byte
     {
         None,
-        ScheduledEventWarning,
+        Rotation,
+        RotationDayAfter,
     }
 
-    public class ActionTimer : ModelBase
+
+    public record class ActionTimer : ModelBase
     {
-        public DateTime ExpirationUtc { get; set; }
-        public ActionTimerType Type { get; set; }
-        public bool Processed { get; set; }
+        [JsonConverter(typeof(NodaInstantConverter))]
+        public Instant ExpirationInstant { get; init; }
+
+        public ActionTimerType Type { get; init; }
     }
 }

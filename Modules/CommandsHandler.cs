@@ -35,7 +35,6 @@ public class CommandHandler
         }
         catch (Exception)
         {
-
             throw;
         }
     }
@@ -73,7 +72,6 @@ public class CommandHandler
         }
         catch (Exception)
         {
-
             throw;
         }
     }
@@ -82,11 +80,11 @@ public class CommandHandler
     {
         try
         {
-            await _commands.RegisterCommandsToGuildAsync(831323402211426314, true);
+            foreach (var guild in _discord.Guilds)
+                await _commands.RegisterCommandsToGuildAsync(guild.Id, deleteMissing: true);
         }
         catch (Exception)
         {
-
             throw;
         }
     }

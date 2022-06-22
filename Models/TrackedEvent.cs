@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Jekbot.Models
+﻿namespace Jekbot.Models
 {
-    public class TrackedEvent : ModelBase
+    public record class TrackedEvent : ModelBase
     {
+        public ulong DiscordEventId { get; init; }
     }
 }

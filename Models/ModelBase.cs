@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Jekbot.Models
+﻿namespace Jekbot.Models
 {
-    public abstract class ModelBase
+    public abstract record class ModelBase
     {
-        public ulong Id { get; set; }
-        public ulong GuildId { get; set; }
+        public Guid Key { get; init; } = Guid.NewGuid();
     }
 }

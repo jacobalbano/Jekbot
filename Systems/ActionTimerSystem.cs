@@ -1,45 +1,75 @@
 ﻿using Discord.WebSocket;
-using Jekbot.Resources;
+using Jekbot.Models;
+using Jekbot.Modules;
+using Jekbot.Utility;
+using Jekbot.Utility.Persistence;
+using NodaTime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Jekbot.Systems
+namespace Jekbot.Systems;
+
+public class ActionTimerSystem
 {
-    public class ActionTimerSystem
+    public ActionTimerSystem(DiscordSocketClient discord, Orchestrator orchestrator, RotationSystem rotation)
     {
-        public ActionTimerSystem(ConfigFile config, DiscordSocketClient client)
-        {
-            this.config = config;
-            this.client = client;
-        }
+        orchestrator.OnTick += Orchestrator_OnTick;
+        this.discord = discord;
+        this.rotation = rotation;
+    }
 
-        public Task Start()
-        {
-            _ = new Timer(
-                OnTick,
-                null,
-                config.TickMilliseconds,
-                config.TickMilliseconds
-            );
+    private async Task Orchestrator_OnTick(object? sender, EventArgs e)
+    {
+        foreach (var guild in discord.Guilds)
+            await OnTickInterval(Instance.Get(guild.Id));
+    }
 
-            return Task.CompletedTask;
-        }
-
-        private void OnTick(object? state)
+    public async Task OnTickInterval(Instance instance)
+    {
+        foreach (var timer in GetPassedTimers(instance))
         {
-            using (var dbApi = Database.Prepare())
+            switch (timer.Type)
             {
-                foreach (var timer in dbApi.GetPassedTimers())
-                {
-                    Console.WriteLine($"Timer #{timer.Id} passed");
-                }
+                case ActionTimerType.Rotation:
+                    await rotation.HandleRotationTimer(instance, timer);
+                    break;
+                case ActionTimerType.RotationDayAfter:
+                    await rotation.HandleRotationDayAfterTimer(instance, timer);
+                    break;
+                case ActionTimerType.None:
+                default:
+                    break;
             }
         }
-
-        private readonly ConfigFile config;
-        private readonly DiscordSocketClient client;
     }
+
+    public void ClearTimers(Instance instance, ActionTimerType type)
+    {
+        for (int i = instance.Timers.Count; i-- > 0;)
+        {
+            if (instance.Timers[i].Type == type)
+                instance.Timers.RemoveAt(i);
+        }
+    }
+
+    private static IEnumerable<ActionTimer> GetPassedTimers(Instance instance)
+    {
+        var now = SystemClock.Instance.GetCurrentInstant();
+        var timers = instance.Timers;
+        for (int i = timers.Count; i-- > 0;)
+        {
+            var x = timers[i];
+            if (x.ExpirationInstant <= now)
+            {
+                yield return x;
+                timers.RemoveAt(i);
+            }
+        }
+    }
+
+    private readonly DiscordSocketClient discord;
+    private readonly RotationSystem rotation;
 }

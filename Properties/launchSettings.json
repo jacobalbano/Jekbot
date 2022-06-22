@@ -2,7 +2,7 @@
   "profiles": {
     "Jekbot": {
       "commandName": "Project",
-      "workingDirectory": "$(ProjectDir)"
+      "workingDirectory": "$(ProjectDir)/Environment"
     }
   }
 }
