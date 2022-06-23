@@ -14,7 +14,7 @@ namespace Jekbot.Modules;
 public class RotationModule : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("add", "Add a user to the rotation list")]
-    public async Task Add(IUser user, IUser? after = null)
+    public async Task Add(IUser user, IUser? before = null)
     {
         var instance = Context.GetInstance();
         var rotation = instance.Rotation;
@@ -24,21 +24,45 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        if (after == null)
+        int index = 0;
+        if (before == null)
+        {
             rotation.Add(new RotationEntry { DiscordUserId = user.Id });
+            index = rotation.Count - 1;
+        }
         else
         {
-            var index = rotation.FindIndex(x => x.DiscordUserId == after.Id);
+            index = rotation.FindIndex(x => x.DiscordUserId == before.Id);
             if (index < 0)
             {
-                await RespondAsync("'After' user is not in the rotation!");
+                await RespondAsync("'Before' user is not in the rotation!");
                 return;
             }
 
-            rotation.Insert(index + 1, new RotationEntry { DiscordUserId = user.Id });
+            rotation.Insert(index, new RotationEntry { DiscordUserId = user.Id });
         }
 
-        await RespondAsync($"{user.Mention} has been added to the rotation at position #{rotation.FindIndex(x => x.DiscordUserId == user.Id) + 1}");
+        await RespondAsync($"{user.Mention} has been added to the rotation at position #{index + 1}");
+        await rotationSystem.RefreshEvents(instance);
+        await rotationSystem.PostRotationMessage(instance);
+    }
+
+    [SlashCommand("remove", "Remove a user from the rotation list")]
+    public async Task Remove(IUser user)
+    {
+        var instance = Context.GetInstance();
+        var rotation = instance.Rotation;
+
+        var rot = rotation.FirstOrDefault(x => x.DiscordUserId == user.Id);
+        if (rot == null)
+        {
+            await RespondAsync("User is not in the rotation!");
+            return;
+        }
+
+        rotation.Remove(rot);
+        await RespondAsync($"{user.Mention} has been removed from the rotation");
+        await rotationSystem.RefreshEvents(instance);
         await rotationSystem.PostRotationMessage(instance);
     }
 
@@ -79,6 +103,8 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
         sb.AppendLine($"{first.Mention} is now in position #{secondPos + 1}");
         sb.AppendLine($"{second.Mention} is now in position #{firstPos + 1}");
         await RespondAsync(sb.ToString());
+
+        await rotationSystem.RefreshEvents(instance);
         await rotationSystem.PostRotationMessage(instance);
     }
 
@@ -97,6 +123,8 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
 
         rotation[pos] = rotation[pos] with { Skip = true };
         await RespondAsync($"Skipping {user.Mention}'s next turn");
+
+        await rotationSystem.RefreshEvents(instance);
         await rotationSystem.PostRotationMessage(instance);
     }
 

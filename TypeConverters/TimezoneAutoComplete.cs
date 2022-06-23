@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Jekbot.Systems;
 using NodaTime;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ namespace Jekbot.TypeConverters
             var search = (autocompleteInteraction.Data.Current.Value as string ?? "US/")
                 .ToUpperInvariant()
                 .Split(' ');
-            return Task.FromResult(AutocompletionResult.FromSuccess(DateTimeZoneProviders.Tzdb
+            return Task.FromResult(AutocompletionResult.FromSuccess(timezoneProvider.Tzdb
                 .Ids.Select(x => CalculateRank(search, x))
                 .Where(x => x.Count > 0)
                 .OrderByDescending(x => x.Count)
@@ -35,5 +36,11 @@ namespace Jekbot.TypeConverters
         }
 
         private record struct Rank (int Count, string Result);
+        private readonly TimezoneProvider timezoneProvider;
+
+        public TimezoneAutoComplete(TimezoneProvider timezoneProvider)
+        {
+            this.timezoneProvider = timezoneProvider;
+        }
     }
 }

@@ -95,6 +95,46 @@ namespace Jekbot.Systems
             });
         }
 
+        public async Task RefreshEvents(Instance instance)
+        {
+            /*
+             * Advances past any immediately-skipped users
+             * Creates an event for the current rotation if one does not exist
+             * Cancels any other events
+             */
+
+            if (instance.Rotation.Count == 0)
+                return;
+
+            AdvancePastSkippedUsers(instance.Rotation);
+
+            var next = instance.Rotation.First();
+            if (next.TrackedEventKey == null)
+                await CreateEventForNextRotation(instance);
+
+            var guild = discord.GetGuild(instance.Id);
+            for (int i = 1; i < instance.Rotation.Count; i++)
+            {
+                var rot = instance.Rotation[i];
+                if (rot.TrackedEventKey is Guid key)
+                {
+                    var trackedEvent = instance.GuildEvents
+                        .FirstOrDefault(x => x.Key == key);
+
+                    if (trackedEvent != null)
+                    {
+                        var discordEvent = await guild.GetEventAsync(trackedEvent.DiscordEventId);
+                        if (discordEvent != null)
+                            await discordEvent.DeleteAsync();
+
+                        instance.GuildEvents.Remove(trackedEvent);
+                    }
+
+                    instance.Rotation[i] = rot with { TrackedEventKey = null };
+                }
+            }
+        }
+
         public async Task HandleRotationDayAfterTimer(Instance instance, ActionTimer timer)
         {
             /*
@@ -106,12 +146,19 @@ namespace Jekbot.Systems
              * Post the updated rotation in the channel with a link to the new event
              */
 
+            if (!AdvanceRotation(instance.Rotation))
+                return;
+
+            await CreateEventForNextRotation(instance);
+            await PostRotationMessage(instance);
+        }
+
+        private async Task CreateEventForNextRotation(Instance instance)
+        {
             var guild = discord.GetGuild(instance.Id);
             var rotation = instance.Rotation;
 
-            if (!AdvanceRotation(rotation, out var next))
-                return;
-
+            var next = instance.Rotation.First();
             var user = await discord.GetUserAsync(next.DiscordUserId);
             var nextGameNight = GenerateFutureGameNightInstants(instance).First();
             var guildEvent = await guild.CreateEventAsync(
@@ -125,8 +172,6 @@ namespace Jekbot.Systems
             instance.GuildEvents.Add(newEvent);
 
             rotation[0] = next with { TrackedEventKey = newEvent.Key };
-
-            await PostRotationMessage(instance);
         }
 
         public async Task PostRotationMessage(Instance instance)
@@ -179,7 +224,7 @@ namespace Jekbot.Systems
             if (cfg.SchedulingRelativeToTz == null || cfg.ScheduledTime == null || cfg.ScheduledDay == null)
                 yield break;
 
-            var tz = DateTimeZoneProviders.Tzdb[cfg.SchedulingRelativeToTz];
+            var tz = timezoneProvider.Tzdb[cfg.SchedulingRelativeToTz];
             var clock = SystemClock.Instance.InZone(tz);
 
             var isoDay = cfg.ScheduledDay.Value.ToIsoDayOfWeek();
@@ -202,23 +247,26 @@ namespace Jekbot.Systems
             }
         }
 
-        private static bool AdvanceRotation(PersistableList<RotationEntry> rotation, out RotationEntry next)
+        private static bool AdvanceRotation(PersistableList<RotationEntry> rotation)
         {
-            next = default;
             if (rotation.Count == 0)
                 return false;
+            
+            AdvancePastSkippedUsers(rotation);
 
+            rotation.Add(rotation[0]);
+            rotation.RemoveAt(0);
+            return true;
+        }
+
+        private static void AdvancePastSkippedUsers(PersistableList<RotationEntry> rotation)
+        {
             while (rotation[0].Skip)
             {
                 var move = rotation[0];
                 rotation.RemoveAt(0);
                 rotation.Add(move with { Skip = false });
             }
-
-            rotation.Add(rotation[0]);
-            rotation.RemoveAt(0);
-            next = rotation[0];
-            return true;
         }
 
         private static string CreateEventLink(ulong guildId, ulong discordEventId)
@@ -226,11 +274,13 @@ namespace Jekbot.Systems
             return $"https://discord.com/events/{guildId}/{discordEventId}";
         }
 
-        public RotationSystem(DiscordSocketClient discord)
+        public RotationSystem(DiscordSocketClient discord, TimezoneProvider timezoneProvider)
         {
             this.discord = discord;
+            this.timezoneProvider = timezoneProvider;
         }
 
         private readonly DiscordSocketClient discord;
+        private readonly TimezoneProvider timezoneProvider;
     }
 }

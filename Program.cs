@@ -26,6 +26,7 @@ public class Program
         var commands = services.GetRequiredService<InteractionService>();
         var handler = services.GetRequiredService<CommandHandler>();
         var orchestrator = services.GetRequiredService<Orchestrator>();
+        _ = services.GetRequiredService<PersistenceSystem>();
 
         // Registering a concrete type TypeConverter
         commands.AddTypeConverter<GuildPermissions>(new GuildPermissionsTypeConverter());
@@ -64,5 +65,6 @@ public class Program
         .AddSingleton<ActionTimerSystem>()
         .AddSingleton<PersistenceSystem>()
         .AddSingleton<RotationSystem>()
+        .AddSingleton<TimezoneProvider>()
         .BuildServiceProvider();
 }
