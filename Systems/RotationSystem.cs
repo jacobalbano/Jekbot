@@ -214,7 +214,16 @@ namespace Jekbot.Systems
                     sb.AppendLine(CreateEventLink(instance.Id, trackedEvent.DiscordEventId));
                 }
 
-                await channel.SendMessageAsync(sb.ToString());
+                var message = await channel.SendMessageAsync(sb.ToString());
+
+                try
+                {
+                    await pins.PinMessage(instance, channel.Id, message.Id, "Rotation");
+                }
+                catch (Exception)
+                {
+                    await message.ReplyAsync("Failed to pin message");
+                }
             }
         }
 
@@ -274,13 +283,15 @@ namespace Jekbot.Systems
             return $"https://discord.com/events/{guildId}/{discordEventId}";
         }
 
-        public RotationSystem(DiscordSocketClient discord, TimezoneProvider timezoneProvider)
+        public RotationSystem(DiscordSocketClient discord, TimezoneProvider timezoneProvider, PinSystem pins)
         {
             this.discord = discord;
             this.timezoneProvider = timezoneProvider;
+            this.pins = pins;
         }
 
         private readonly DiscordSocketClient discord;
         private readonly TimezoneProvider timezoneProvider;
+        private readonly PinSystem pins;
     }
 }

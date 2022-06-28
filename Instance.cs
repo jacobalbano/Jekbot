@@ -22,6 +22,7 @@ namespace Jekbot
         public PersistableList<ActionTimer> Timers { get; } = new("Timers");
         public PersistableList<RotationEntry> Rotation { get; } = new("Rotation");
         public PersistableList<TrackedEvent> GuildEvents { get; } = new("GuildEvents");
+        public PersistableList<PinnedMessage> PinnedMessages { get; } = new("PinnedMessages");
 
         public RotationSystem.Config RotationConfig { get; } = new();
 

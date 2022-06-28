@@ -13,4 +13,3 @@ Copy modified files from /bin/Release/[...]/linux-arm/publish to install dir
 - Enable modules per-server
 - Role-based command permissions
 - Audit all messages the bot sends
-- Pin system

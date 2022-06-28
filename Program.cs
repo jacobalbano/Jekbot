@@ -65,6 +65,7 @@ public class Program
         .AddSingleton<ActionTimerSystem>()
         .AddSingleton<PersistenceSystem>()
         .AddSingleton<RotationSystem>()
+        .AddSingleton<PinSystem>()
         .AddSingleton<TimezoneProvider>()
         .BuildServiceProvider();
 }
