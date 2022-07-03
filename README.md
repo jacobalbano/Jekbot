@@ -10,6 +10,6 @@ PM> dotnet publish -r linux-arm -c Release
 Copy modified files from /bin/Release/[...]/linux-arm/publish to install dir
 
 # Todo
-- Enable modules per-server
 - Role-based command permissions
 - Audit all messages the bot sends
+- Versioning and migration system for models

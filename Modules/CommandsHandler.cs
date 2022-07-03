@@ -32,10 +32,19 @@ public class CommandHandler
             _discord.Ready += Ready;
             _commands.SlashCommandExecuted += _commands_SlashCommandExecuted;
             _commands.AutocompleteHandlerExecuted += _commands_AutocompleteHandlerExecuted;
+            _commands.InteractionExecuted += _commands_InteractionExecuted;
         }
         catch (Exception)
         {
             throw;
+        }
+    }
+
+    private async Task _commands_InteractionExecuted(ICommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
+    {
+        if (arg3 is PreconditionResult result)
+        {
+            await arg2.Interaction.RespondAsync(result.ErrorReason);
         }
     }
 

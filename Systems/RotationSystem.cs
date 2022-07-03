@@ -109,7 +109,7 @@ namespace Jekbot.Systems
             AdvancePastSkippedUsers(instance.Rotation);
 
             var next = instance.Rotation.First();
-            if (next.TrackedEventKey == null)
+            if (next.Type == RotationEntryType.User && next.TrackedEventKey == null)
                 await CreateEventForNextRotation(instance);
 
             var guild = discord.GetGuild(instance.Id);
@@ -159,7 +159,10 @@ namespace Jekbot.Systems
             var rotation = instance.Rotation;
 
             var next = instance.Rotation.First();
-            var user = await discord.GetUserAsync(next.DiscordUserId);
+            if (next.Type != RotationEntryType.User)
+                return;
+
+            var user = await discord.GetUserAsync(next.DiscordUserId ?? throw new Exception("Missing user ID in RotationEntry"));
             var nextGameNight = GenerateFutureGameNightInstants(instance).First();
             var guildEvent = await guild.CreateEventAsync(
                 $"Game Night - {user.Username}",
@@ -193,25 +196,48 @@ namespace Jekbot.Systems
 
                 var sb = new StringBuilder();
                 sb.AppendLine("Current rotation:");
-                sb.Append(":star: ");
+                bool firstUser = true;
                 foreach (var item in instance.Rotation)
                 {
-                    var user = await discord.GetUserAsync(item.DiscordUserId);
-                    sb.Append($"{user.Mention} ");
-                    if (item.Skip) sb.AppendLine("(away)");
-                    else
+                    switch (item.Type)
                     {
-                        intervals.MoveNext();
-                        sb.AppendLine($"(<t:{intervals.Current.ToUnixTimeSeconds()}>)");
+                        case RotationEntryType.User:
+                            if (item.DiscordUserId is not ulong userId)
+                                throw new Exception("RotationEntry of type User did not have a user id");
+
+                            var user = await discord.GetUserAsync(userId);
+                            if (firstUser)
+                            {
+                                firstUser = false;
+                                sb.Append(":star: ");
+                            }
+
+                            sb.Append($"{user.Mention} ");
+                            if (item.Skip) sb.AppendLine("(away)");
+                            else
+                            {
+                                intervals.MoveNext();
+                                sb.AppendLine($"(<t:{intervals.Current.ToUnixTimeSeconds()}>)");
+                            }
+                            break;
+                        case RotationEntryType.Postponment:
+                            intervals.MoveNext();
+                            sb.AppendLine($"**Postponed** (<t:{intervals.Current.ToUnixTimeSeconds()}>)");
+                            break;
+                        default:
+                            throw new Exception("Unhandled enum value");
                     }
                 }
 
                 var next = instance.Rotation.FirstOrDefault() ?? throw new Exception("Rotation had no entries!");
-                var trackedEvent = instance.GuildEvents.FirstOrDefault(x => x.Key == next.TrackedEventKey);
-                if (trackedEvent != null)
+                if (next.Type == RotationEntryType.User)
                 {
-                    sb.AppendLine("Please RSVP below to help us pick what to play next time!");
-                    sb.AppendLine(CreateEventLink(instance.Id, trackedEvent.DiscordEventId));
+                    var trackedEvent = instance.GuildEvents.FirstOrDefault(x => x.Key == next.TrackedEventKey);
+                    if (trackedEvent != null)
+                    {
+                        sb.AppendLine("Please RSVP below to help us pick what to play next time!");
+                        sb.AppendLine(CreateEventLink(instance.Id, trackedEvent.DiscordEventId));
+                    }
                 }
 
                 var message = await channel.SendMessageAsync(sb.ToString());
@@ -263,7 +289,9 @@ namespace Jekbot.Systems
             
             AdvancePastSkippedUsers(rotation);
 
-            rotation.Add(rotation[0]);
+            if (rotation[0].Type == RotationEntryType.User)
+                rotation.Add(rotation[0]);
+
             rotation.RemoveAt(0);
             return true;
         }

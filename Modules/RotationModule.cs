@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Jekbot.Models;
+using Jekbot.Modules.Preconditions;
 using Jekbot.Systems;
 using Jekbot.TypeConverters;
 using NodaTime;
@@ -9,8 +10,8 @@ using System.Text;
 namespace Jekbot.Modules;
 
 [RequireContext(ContextType.Guild)]
-//[RequireUserPermission(GuildPermission.Administrator)]
 [Group("rotation", "Commands for Game Night")]
+[RequireFeatureEnabled("GameNight")]
 public class RotationModule : InteractionModuleBase<SocketInteractionContext>
 {
     [SlashCommand("add", "Add a user to the rotation list")]
@@ -156,6 +157,21 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
         await RespondAsync($"Scheduling updated: next game night will be <t:{next.ToUnixTimeSeconds()}>");
         UpdateTimers(instance, next);
 
+        await rotationSystem.PostRotationMessage(instance);
+    }
+
+    [SlashCommand("postpone", "Postpone game night one week")]
+    public async Task Postpone()
+    {
+        var instance = Context.GetInstance();
+        var rotation = instance.Rotation;
+        if (rotation.FirstOrDefault() is RotationEntry next && next.Type == RotationEntryType.Postponment)
+            return;
+
+        rotation.Insert(0, new RotationEntry { Type = RotationEntryType.Postponment });
+
+        await RespondAsync($"Postponed one week");
+        await rotationSystem.RefreshEvents(instance);
         await rotationSystem.PostRotationMessage(instance);
     }
 
