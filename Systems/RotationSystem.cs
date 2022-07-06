@@ -66,27 +66,33 @@ namespace Jekbot.Systems
 
             if (trackedEvent != null)
             {
-                var guild = discord.GetGuild(instance.Id);
-                var guildEvent = await guild.GetEventAsync(trackedEvent.DiscordEventId);
-                if (guildEvent != null && instance.RotationConfig.ChannelId is ulong channelId)
+                try
                 {
-                    var channel = guild.GetTextChannel(channelId);
-                    if (channel != null)
+                    var guild = discord.GetGuild(instance.Id);
+                    var guildEvent = await guild.GetEventAsync(trackedEvent.DiscordEventId);
+                    if (guildEvent != null && instance.RotationConfig.ChannelId is ulong channelId)
                     {
-                        var users = await guildEvent
-                            .GetUsersAsync()
-                            .FlattenAsync();
+                        var channel = guild.GetTextChannel(channelId);
+                        if (channel != null)
+                        {
+                            var users = await guildEvent
+                                .GetUsersAsync()
+                                .FlattenAsync();
 
-                        var sb = new StringBuilder();
-                        sb.AppendLine("Starting soon!");
-                        sb.AppendLine(string.Join(',', users.Select(x => x.Mention)));
-                        sb.AppendLine(CreateEventLink(instance.Id, guildEvent.Id));
+                            var sb = new StringBuilder();
+                            sb.AppendLine("Starting soon!");
+                            sb.AppendLine(string.Join(',', users.Select(x => x.Mention)));
+                            sb.AppendLine(CreateEventLink(instance.Id, guildEvent.Id));
 
-                        await channel.SendMessageAsync(sb.ToString());
+                            await channel.SendMessageAsync(sb.ToString());
+                        }
                     }
-                }
 
-                instance.GuildEvents.Remove(trackedEvent);
+                    instance.GuildEvents.Remove(trackedEvent);
+                }
+                catch (Exception)
+                {
+                }
             }
 
             instance.Timers.Add(new ActionTimer {
@@ -123,11 +129,17 @@ namespace Jekbot.Systems
 
                     if (trackedEvent != null)
                     {
-                        var discordEvent = await guild.GetEventAsync(trackedEvent.DiscordEventId);
-                        if (discordEvent != null)
-                            await discordEvent.DeleteAsync();
+                        try
+                        {
+                            var discordEvent = await guild.GetEventAsync(trackedEvent.DiscordEventId);
+                            if (discordEvent != null)
+                                await discordEvent.DeleteAsync();
 
-                        instance.GuildEvents.Remove(trackedEvent);
+                            instance.GuildEvents.Remove(trackedEvent);
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
 
                     instance.Rotation[i] = rot with { TrackedEventKey = null };
