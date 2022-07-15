@@ -3,6 +3,7 @@ using Jekbot.Models;
 using Jekbot.Modules;
 using Jekbot.Utility;
 using Jekbot.Utility.Persistence;
+using Microsoft.Extensions.Logging;
 using NodaTime;
 using System;
 using System.Collections.Generic;
@@ -12,13 +13,15 @@ using System.Threading.Tasks;
 
 namespace Jekbot.Systems;
 
+[AutoDiscoverSingletonService, ForceInitialization]
 public class ActionTimerSystem
 {
-    public ActionTimerSystem(DiscordSocketClient discord, Orchestrator orchestrator, RotationSystem rotation)
+    public ActionTimerSystem(DiscordSocketClient discord, Orchestrator orchestrator, RotationSystem rotation, ILogger<ActionTimerSystem> logger)
     {
         orchestrator.OnTick += Orchestrator_OnTick;
         this.discord = discord;
         this.rotation = rotation;
+        this.logger = logger;
     }
 
     private async Task Orchestrator_OnTick(object? sender, EventArgs e)
@@ -31,17 +34,27 @@ public class ActionTimerSystem
     {
         foreach (var timer in GetPassedTimers(instance))
         {
-            switch (timer.Type)
+            try
             {
-                case ActionTimerType.Rotation:
-                    await rotation.HandleRotationTimer(instance, timer);
-                    break;
-                case ActionTimerType.RotationDayAfter:
-                    await rotation.HandleRotationDayAfterTimer(instance, timer);
-                    break;
-                case ActionTimerType.None:
-                default:
-                    break;
+                switch (timer.Type)
+                {
+                    case ActionTimerType.Rotation:
+                        await rotation.HandleRotationTimer(instance, timer);
+                        break;
+                    case ActionTimerType.RotationDayAfter:
+                        await rotation.HandleRotationDayAfterTimer(instance, timer);
+                        break;
+                    case ActionTimerType.None:
+                    default:
+                        break;
+                }
+
+                logger.LogInformation($"Handled {timer.Type} timer");
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"Error handling {timer.Type}");
+                throw;
             }
         }
     }
@@ -72,4 +85,5 @@ public class ActionTimerSystem
 
     private readonly DiscordSocketClient discord;
     private readonly RotationSystem rotation;
+    private readonly ILogger<ActionTimerSystem> logger;
 }

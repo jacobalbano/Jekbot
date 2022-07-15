@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Jekbot.Models;
+using Jekbot.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Jekbot.Systems
 {
+    [AutoDiscoverSingletonService]
     public class PinSystem
     {
         public async Task PinMessage(Instance instance, ulong discordChannelId, ulong discordMessageId, string uniquePinId = null)

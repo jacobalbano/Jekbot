@@ -1,5 +1,7 @@
 ﻿using Discord.Interactions;
 using Discord.WebSocket;
+using Jekbot.Utility;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,16 +11,19 @@ using System.Threading.Tasks;
 
 namespace Jekbot.Modules;
 
+[AutoDiscoverSingletonService, ForceInitialization]
 public class CommandHandler
 {
     private readonly InteractionService _commands;
     private readonly DiscordSocketClient _discord;
+    private readonly ILogger<CommandHandler> logger;
     private readonly IServiceProvider _services;
 
-    public CommandHandler(InteractionService commands, DiscordSocketClient discord, IServiceProvider services)
+    public CommandHandler(InteractionService commands, DiscordSocketClient discord, ILogger<CommandHandler> logger, IServiceProvider services)
     {
         _commands = commands;
         _discord = discord;
+        this.logger = logger;
         _services = services;
     }
 
@@ -34,8 +39,9 @@ public class CommandHandler
             _commands.AutocompleteHandlerExecuted += _commands_AutocompleteHandlerExecuted;
             _commands.InteractionExecuted += _commands_InteractionExecuted;
         }
-        catch (Exception)
+        catch (Exception e)
         {
+            logger.LogError(e, "Error initializing command handler");
             throw;
         }
     }

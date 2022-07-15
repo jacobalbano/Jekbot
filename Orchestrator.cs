@@ -9,15 +9,10 @@ using System.Threading.Tasks;
 
 namespace Jekbot.Systems
 {
+    [AutoDiscoverSingletonService, ForceInitialization]
     public class Orchestrator
     {
         public event AsyncEventHandler OnTick;
-
-        public Task Start()
-        {
-            SetNextTick();
-            return Task.CompletedTask;
-        }
 
         private void OnTickInterval(object? state)
         {
@@ -45,12 +40,22 @@ namespace Jekbot.Systems
             tick.Change(Instance.BotConfig.TickMilliseconds, Timeout.Infinite);
         }
 
-        public Orchestrator()
+        public Orchestrator(DiscordSocketClient discord)
         {
-             tick = new Timer(OnTickInterval, null, Timeout.Infinite, Timeout.Infinite);
+            this.discord = discord;
+            discord.Ready += Discord_Ready;
+            tick = new Timer(OnTickInterval, null, Timeout.Infinite, Timeout.Infinite);
+        }
+
+        private Task Discord_Ready()
+        {
+            SetNextTick();
+            discord.Ready -= Discord_Ready;
+            return Task.CompletedTask;
         }
 
         public delegate Task AsyncEventHandler(object sender, EventArgs e);
         private readonly Timer tick;
+        private readonly DiscordSocketClient discord;
     }
 }

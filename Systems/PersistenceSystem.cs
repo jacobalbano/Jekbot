@@ -1,4 +1,5 @@
 ﻿using Discord.WebSocket;
+using Jekbot.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Jekbot.Systems
 {
+    [AutoDiscoverSingletonService, ForceInitialization]
     public class PersistenceSystem
     {
         public PersistenceSystem(Orchestrator orchestrator)

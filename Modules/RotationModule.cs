@@ -175,6 +175,16 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
         await rotationSystem.PostRotationMessage(instance);
     }
 
+    [RequireOwner]
+    [SlashCommand("update-timers", "Admin command")]
+    public async Task UpdateTimers()
+    {
+        var instance = Context.GetInstance();
+        var next = rotationSystem.GenerateFutureGameNightInstants(instance).First();
+        UpdateTimers(instance, next);
+        await RespondAsync($"Rotation timers reset");
+    }
+
     private void UpdateTimers(Instance instance, Instant next)
     {
         actionTimerSystem.ClearTimers(instance, ActionTimerType.Rotation);

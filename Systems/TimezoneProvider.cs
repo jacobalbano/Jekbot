@@ -1,4 +1,5 @@
 ﻿using Jekbot.Utility;
+using Microsoft.Extensions.Logging;
 using NodaTime;
 using NodaTime.TimeZones;
 using System;
@@ -10,13 +11,16 @@ using System.Threading.Tasks;
 
 namespace Jekbot.Systems
 {
+    [AutoDiscoverSingletonService, ForceInitialization]
     public class TimezoneProvider
     {
-        public TimezoneProvider(Orchestrator orchestrator)
+        public TimezoneProvider(Orchestrator orchestrator, ILogger<TimezoneProvider> logger)
         {
             Tzdb = DateTimeZoneProviders.Tzdb;
             actor = new InfrequentActor(Duration.FromHours(12));
             orchestrator.OnTick += (_, _) => actor.Act(CheckForTimezones);
+
+            this.logger = logger;
 
             EnsureDirectorySanity();
             LoadFileIfExists();
@@ -24,6 +28,8 @@ namespace Jekbot.Systems
 
         private async Task CheckForTimezones()
         {
+            logger.LogInformation("Checking for tzdb updates");
+
             using (var client = new HttpClient())
             {
                 try
@@ -39,7 +45,10 @@ namespace Jekbot.Systems
                             .Trim();
 
                         if (lastLatest == latest)
+                        {
+                            logger.LogInformation("No tzdb update found");
                             return;
+                        }
                     }
 
                     //  download the database to a .temp file
@@ -62,10 +71,12 @@ namespace Jekbot.Systems
                     await File.WriteAllTextAsync(latestFilepath, latest);
                     await Task.Run(() => LoadFileIfExists());
 
+                    logger.LogInformation("Downloaded new tzdb");
+
                 }
                 catch (Exception e)
                 {
-                    //  TODO: log the error but do nothing
+                    logger.LogError(e, "Error checking for timezone update");
                 }
             }
         }
@@ -117,7 +128,7 @@ namespace Jekbot.Systems
             }
             catch (Exception e)
             {
-                //  TODO: log the error but do nothing
+                logger.LogError(e, "Error loading tzdb");
             }
         }
 
@@ -128,6 +139,7 @@ namespace Jekbot.Systems
         private static readonly string dbFilepathPending = $"{dbFilepath}.pending";
 
         private readonly InfrequentActor actor;
+        private readonly ILogger<TimezoneProvider> logger;
 
         public IDateTimeZoneProvider Tzdb { get; private set; }
     }

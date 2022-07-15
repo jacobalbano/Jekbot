@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Jekbot.Models;
+using Jekbot.Utility;
 using Jekbot.Utility.Persistence;
 using NodaTime;
 using NodaTime.Extensions;
@@ -14,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace Jekbot.Systems
 {
+    [AutoDiscoverSingletonService]
     public class RotationSystem
     {
         public class Config : PersistableConfig<Config>

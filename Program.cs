@@ -5,6 +5,9 @@ using Jekbot.Modules;
 using Jekbot.Systems;
 using Jekbot.TypeConverters;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
+using Microsoft.Extensions.Logging;
+using Jekbot.Utility;
 
 namespace Jekbot;
 
@@ -21,51 +24,39 @@ public class Program
     static async Task RunAsync()
     {
         using var services = ConfigureServices();
+        ForceInitializationAttribute.DiscoverAndInitialize(services);
 
         var client = services.GetRequiredService<DiscordSocketClient>();
-        var commands = services.GetRequiredService<InteractionService>();
         var handler = services.GetRequiredService<CommandHandler>();
-        var orchestrator = services.GetRequiredService<Orchestrator>();
-        _ = services.GetRequiredService<PersistenceSystem>();
-
-        // Registering a concrete type TypeConverter
-        commands.AddTypeConverter<GuildPermissions>(new GuildPermissionsTypeConverter());
 
         await handler.Initialize();
         await client.LoginAsync(TokenType.Bot, Instance.BotConfig.Token);
-
-        client.Log += (msg) =>
-        {
-            Console.WriteLine(msg.ToString());
-            return Task.CompletedTask;
-        };
-
-        commands.Log += (msg) =>
-        {
-            Console.WriteLine(msg.ToString());
-            return Task.CompletedTask;
-        };
-
         await client.StartAsync();
 
         //  load everything upfront
         foreach (var guild in client.Guilds)
             Instance.Get(guild.Id);
 
-        await orchestrator.Start();
         await Task.Delay(Timeout.Infinite);
     }
 
     static ServiceProvider ConfigureServices() =>
         new ServiceCollection()
+        .DiscoverTaggedSingletons()
         .AddSingleton<DiscordSocketClient>()
         .AddSingleton<InteractionService>()
-        .AddSingleton<CommandHandler>()
-        .AddSingleton<Orchestrator>()
-        .AddSingleton<ActionTimerSystem>()
-        .AddSingleton<PersistenceSystem>()
-        .AddSingleton<RotationSystem>()
-        .AddSingleton<PinSystem>()
-        .AddSingleton<TimezoneProvider>()
+        .AddLogging(x => ConfigureLogging(x))
         .BuildServiceProvider();
+
+    private static ILoggingBuilder ConfigureLogging(ILoggingBuilder x)
+    {
+        return x.AddSerilog(new LoggerConfiguration()
+            .WriteTo.File("logs/jekbot.log",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: null,
+                shared: true
+            )
+            .WriteTo.Console()
+            .CreateLogger());
+    }
 }
