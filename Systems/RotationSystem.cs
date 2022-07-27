@@ -189,6 +189,12 @@ namespace Jekbot.Systems
             instance.GuildEvents.Add(newEvent);
 
             rotation[0] = next with { TrackedEventKey = newEvent.Key };
+
+            instance.Timers.Add(new ActionTimer
+            {
+                Type = ActionTimerType.Rotation,
+                ExpirationInstant = nextGameNight,
+            });
         }
 
         public async Task PostRotationMessage(Instance instance)
