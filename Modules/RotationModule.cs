@@ -189,7 +189,7 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
     {
         actionTimerSystem.ClearTimers(instance, ActionTimerType.Rotation);
         actionTimerSystem.ClearTimers(instance, ActionTimerType.RotationDayAfter);
-        instance.Timers.Add(new ActionTimer { Type = ActionTimerType.Rotation, ExpirationInstant = next.Minus(Duration.FromMinutes(5)) });
+        instance.Timers.Add(new ActionTimer { Type = ActionTimerType.Rotation, ExpirationInstant = next - Duration.FromMinutes(5) });
     }
 
     public RotationModule(ActionTimerSystem actionTimers, RotationSystem rotation)

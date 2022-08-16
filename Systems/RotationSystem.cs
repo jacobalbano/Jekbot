@@ -193,7 +193,7 @@ namespace Jekbot.Systems
             instance.Timers.Add(new ActionTimer
             {
                 Type = ActionTimerType.Rotation,
-                ExpirationInstant = nextGameNight,
+                ExpirationInstant = nextGameNight - Duration.FromMinutes(5),
             });
         }
 
