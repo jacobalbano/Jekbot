@@ -277,7 +277,7 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
             await DeferAsync();
 
             var instance = Context.GetInstance();
-            using (var config = Context.GetInstance().Database.GetSingleton<Config>())
+            using (var config = instance.Database.GetSingleton<Config>())
             {
                 config.Value.ScheduledTime = time;
                 config.Value.ScheduledDay = day;
