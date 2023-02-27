@@ -53,7 +53,7 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
         if (trackedEvent == null) return;
 
         using var rotation = new RotationList(instance);
-        if (!rotationSystem.AdvanceRotation(instance, rotation))
+        if (!RotationSystem.AdvanceRotation(rotation))
             return;
 
         await rotationSystem.CreateEventForNextRotation(instance, rotation);
@@ -313,6 +313,7 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
             await rotationSystem.PostRotationMessage(instance, rotation);
         }
 
+#if DEBUG
         [RequireOwner]
         [SlashCommand("advance", "Advance game night manually")]
         public async Task DebugAdvance()
@@ -321,7 +322,7 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
 
             var instance = Context.GetInstance();
             using var rotation = new RotationList(instance);
-            if (!rotationSystem.AdvanceRotation(instance, rotation))
+            if (!RotationSystem.AdvanceRotation(rotation))
             {
                 await FollowupAsync("Failed to advance");
                 return;
@@ -331,6 +332,7 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
             await rotationSystem.PostRotationMessage(instance, rotation);
             await FollowupAsync("Advanced");
         }
+#endif
 
         public ConfigModule(RotationSystem rotation)
         {

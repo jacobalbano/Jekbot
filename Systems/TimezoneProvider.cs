@@ -30,58 +30,55 @@ namespace Jekbot.Systems
         {
             logger.LogInformation("Checking for tzdb updates");
 
-            using (var client = new HttpClient())
+            try
             {
-                try
-                {
-                    EnsureDirectorySanity();
+                using var client = new HttpClient();
+                EnsureDirectorySanity();
 
-                    var latest = (await client.GetStringAsync("https://nodatime.org/tzdb/latest.txt"))
+                var latest = (await client.GetStringAsync("https://nodatime.org/tzdb/latest.txt"))
+                    .Trim();
+
+                if (File.Exists(latestFilepath))
+                {
+                    var lastLatest = (await File.ReadAllTextAsync(latestFilepath))
                         .Trim();
 
-                    if (File.Exists(latestFilepath))
+                    if (lastLatest == latest)
                     {
-                        var lastLatest = (await File.ReadAllTextAsync(latestFilepath))
-                            .Trim();
-
-                        if (lastLatest == latest)
-                        {
-                            logger.LogInformation("No tzdb update found");
-                            return;
-                        }
+                        logger.LogInformation("No tzdb update found");
+                        return;
                     }
-
-                    //  download the database to a .temp file
-                    using (var stream = await client.GetStreamAsync(latest))
-                    using (var filestream = File.OpenWrite(dbFilepathTemp))
-                        await stream.CopyToAsync(filestream);
-
-                    //  rename the old file to .pending
-                    if (File.Exists(dbFilepath))
-                        File.Move(dbFilepath, dbFilepathPending);
-
-                    //  rename the new file to have the standard name
-                    File.Move(dbFilepathTemp, dbFilepath);
-                    
-                    //  delete the pending file if it exists
-                    if (File.Exists(dbFilepathPending))
-                        File.Delete(dbFilepathPending);
-
-                    //  save the url to the newly downloaded file and load it into the system
-                    await File.WriteAllTextAsync(latestFilepath, latest);
-                    await Task.Run(() => LoadFileIfExists());
-
-                    logger.LogInformation("Downloaded new tzdb");
-
                 }
-                catch (Exception e)
-                {
-                    logger.LogError(e, "Error checking for timezone update");
-                }
+
+                //  download the database to a .temp file
+                using (var stream = await client.GetStreamAsync(latest))
+                using (var filestream = File.OpenWrite(dbFilepathTemp))
+                    await stream.CopyToAsync(filestream);
+
+                //  rename the old file to .pending
+                if (File.Exists(dbFilepath))
+                    File.Move(dbFilepath, dbFilepathPending);
+
+                //  rename the new file to have the standard name
+                File.Move(dbFilepathTemp, dbFilepath);
+
+                //  delete the pending file if it exists
+                if (File.Exists(dbFilepathPending))
+                    File.Delete(dbFilepathPending);
+
+                //  save the url to the newly downloaded file and load it into the system
+                await File.WriteAllTextAsync(latestFilepath, latest);
+                await Task.Run(() => LoadFileIfExists());
+
+                logger.LogInformation("Downloaded new tzdb");
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, "Error checking for timezone update");
             }
         }
 
-        private void EnsureDirectorySanity()
+        private static void EnsureDirectorySanity()
         {
             /*
              * ideal state when beginning an operation:

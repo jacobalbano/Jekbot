@@ -204,7 +204,7 @@ namespace Jekbot.Systems
             }
         }
 
-        public bool AdvanceRotation(Instance instance, List<RotationEntry> rotation)
+        public static bool AdvanceRotation(List<RotationEntry> rotation)
         {
             if (rotation.Count == 0)
                 return false;

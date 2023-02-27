@@ -20,18 +20,18 @@ namespace Jekbot.Modules.Preconditions
             featureId = id;
         }
 
-        public override async Task<PreconditionResult> CheckRequirementsAsync(IInteractionContext context, ICommandInfo commandInfo, IServiceProvider services)
+        public override Task<PreconditionResult> CheckRequirementsAsync(IInteractionContext context, ICommandInfo commandInfo, IServiceProvider services)
         {
-            if (context.User is SocketGuildUser gUser)
+            if (context.User is SocketGuildUser)
             {
                 var instance = Instance.Get(context.Guild.Id);
                 if (instance.IsFeatureEnabled(featureId))
-                    return PreconditionResult.FromSuccess();
+                    return Task.FromResult(PreconditionResult.FromSuccess());
                 else
-                    return PreconditionResult.FromError($"The {featureId} feature is not enabled.");
+                    return Task.FromResult(PreconditionResult.FromError($"The {featureId} feature is not enabled."));
             }
             else
-                return PreconditionResult.FromError("You must be in a guild to run this command.");
+                return Task.FromResult(PreconditionResult.FromError("You must be in a guild to run this command."));
         }
 
         private readonly FeatureId featureId;

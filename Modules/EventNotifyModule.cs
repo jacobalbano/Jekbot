@@ -28,7 +28,8 @@ public class EventNotifyModule : InteractionModuleBase<SocketInteractionContext>
         {
             await DeferAsync();
 
-            using var config = Context.GetInstance().Database.GetSingleton<Config>();
+            var instance = Context.GetInstance();
+            using var config = instance.Database.GetSingleton<Config>();
             config.Value.ChannelId = channel.Id;
 
             await FollowupAsync(embed: new EmbedBuilder()
@@ -104,8 +105,15 @@ public class EventNotifyModule : InteractionModuleBase<SocketInteractionContext>
                 sb.AppendLine(string.Join(',', users.Select(x => x.Mention)));
                 sb.AppendLine(GuildEventUtility.CreateEventLink(guild.Id, guildEvent.Id));
 
-                await channel.SendMessageAsync(sb.ToString());
-                await guildEvent.StartAsync();
+                try
+                {
+                    await channel.SendMessageAsync(sb.ToString());
+                    await guildEvent.StartAsync();
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e, "Failed to notify event start");
+                }
             }
         }
     }

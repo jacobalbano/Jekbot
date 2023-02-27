@@ -37,9 +37,9 @@ public class CommandHandler
             _discord.ButtonExecuted += ButtonExecuted;
             _discord.Ready += Ready;
             _discord.JoinedGuild += JoinedGuild;
-            _commands.SlashCommandExecuted += _commands_SlashCommandExecuted;
-            _commands.AutocompleteHandlerExecuted += _commands_AutocompleteHandlerExecuted;
-            _commands.InteractionExecuted += _commands_InteractionExecuted;
+            _commands.SlashCommandExecuted += Commands_SlashCommandExecuted;
+            _commands.AutocompleteHandlerExecuted += Commands_AutocompleteHandlerExecuted;
+            _commands.InteractionExecuted += Commands_InteractionExecuted;
         }
         catch (Exception e)
         {
@@ -48,7 +48,7 @@ public class CommandHandler
         }
     }
 
-    private async Task _commands_InteractionExecuted(ICommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
+    private async Task Commands_InteractionExecuted(ICommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
     {
         if (arg3 is PreconditionResult result)
         {
@@ -59,12 +59,12 @@ public class CommandHandler
         }
     }
 
-    private Task _commands_AutocompleteHandlerExecuted(IAutocompleteHandler arg1, Discord.IInteractionContext arg2, IResult arg3)
+    private Task Commands_AutocompleteHandlerExecuted(IAutocompleteHandler arg1, Discord.IInteractionContext arg2, IResult arg3)
     {
         return Task.CompletedTask;
     }
 
-    private Task _commands_SlashCommandExecuted(SlashCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
+    private Task Commands_SlashCommandExecuted(SlashCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
     {
         return Task.CompletedTask;
     }
