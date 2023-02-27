@@ -130,7 +130,6 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
 
             await FollowupAsync(embed: new EmbedBuilder()
                 .WithDescription($"{user.Mention} has been added to the rotation at position #{index + 1}")
-                .WithColor(Color.Red)
                 .Build());
             await rotationSystem.RefreshEvents(instance, rotation);
             await rotationSystem.PostRotationMessage(instance, rotation);
@@ -158,7 +157,6 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
 
             await FollowupAsync(embed: new EmbedBuilder()
                 .WithDescription($"{user.Mention} has been removed from the rotation")
-                .WithColor(Color.Red)
                 .Build());
             await rotationSystem.RefreshEvents(instance, rotation);
             await rotationSystem.PostRotationMessage(instance, rotation);
