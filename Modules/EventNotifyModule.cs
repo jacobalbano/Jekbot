@@ -83,12 +83,13 @@ public class EventNotifyModule : InteractionModuleBase<SocketInteractionContext>
 
     private async Task NotifyEvent(TrackedEvent v)
     {
-        if (!Context.GetInstance().IsFeatureEnabled(FeatureId.EmojiAgreement)) return;
+        var instance = Instance.Get(v.GuildId);
+        if (!instance.IsFeatureEnabled(FeatureId.EventNotify)) return;
 
         var guild = discord.GetGuild(v.GuildId);
         var guildEvent = await guild.GetEventAsync(v.Id);
 
-        var config = Instance.Get(guild.Id).Database.GetSingleton<Config>().Value;
+        var config = instance.Database.GetSingleton<Config>().Value;
         if (guildEvent != null && config.ChannelId is ulong channelId)
         {
             var channel = guild.GetTextChannel(channelId);

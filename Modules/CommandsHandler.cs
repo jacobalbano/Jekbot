@@ -36,6 +36,7 @@ public class CommandHandler
             _discord.InteractionCreated += InteractionCreated;
             _discord.ButtonExecuted += ButtonExecuted;
             _discord.Ready += Ready;
+            _discord.JoinedGuild += JoinedGuild;
             _commands.SlashCommandExecuted += _commands_SlashCommandExecuted;
             _commands.AutocompleteHandlerExecuted += _commands_AutocompleteHandlerExecuted;
             _commands.InteractionExecuted += _commands_InteractionExecuted;
@@ -78,7 +79,7 @@ public class CommandHandler
 
     private async Task Ready()
     {
-        await RegisterCommands();
+        await RegisterCommandsToAllGuilds();
         _discord.Ready -= Ready;
     }
 
@@ -95,12 +96,23 @@ public class CommandHandler
         }
     }
 
-    private async Task RegisterCommands()
+    private async Task JoinedGuild(SocketGuild guild)
+    {
+        Instance.Get(guild.Id);
+        await RegisterCommandsToGuild(guild.Id);
+    }
+
+    private async Task RegisterCommandsToAllGuilds()
+    {
+        foreach (var guild in _discord.Guilds)
+            await RegisterCommandsToGuild(guild.Id);
+    }
+
+    private async Task RegisterCommandsToGuild(ulong guildId)
     {
         try
         {
-            foreach (var guild in _discord.Guilds)
-                await _commands.RegisterCommandsToGuildAsync(guild.Id, deleteMissing: true);
+            await _commands.RegisterCommandsToGuildAsync(guildId, deleteMissing: true);
         }
         catch (Exception)
         {

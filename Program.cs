@@ -21,30 +21,6 @@ public class Program
         if (args.Any())
             Directory.SetCurrentDirectory(args[0]);
 
-        //var db = new Database("Test");
-        //db.LoadPersistentData("831323402211426314");
-        //db.DeleteAll<PinnedMessage>();
-
-        //db.Insert(new PinnedMessage { UniqueName = "Jake" });
-        //db.Insert(new PinnedMessage { UniqueName = "Ruby" });
-        //var pinsQuery = db.Select<PinnedMessage>()
-        //    .OrderBy(x => x.DiscordChannelId)
-        //    .Where(x => x.UniqueName.StartsWith("R"))
-        //    .ToEnumerable();
-
-        //foreach (var pin in pinsQuery)
-        //    Console.WriteLine(pin.UniqueName);
-
-        //var jake = db.Select<PinnedMessage>()
-        //    .Where(x => x.UniqueName.StartsWith("J"))
-        //    .Single() with
-        //{ DiscordChannelId = 1 };
-
-        //db.Update(jake);
-
-        //foreach (var x in db.Select<PinnedMessage>().ToEnumerable())
-        //    Console.WriteLine($"{x.UniqueName}, {x.DiscordChannelId}");
-
         RunAsync().GetAwaiter().GetResult();
     }
 
