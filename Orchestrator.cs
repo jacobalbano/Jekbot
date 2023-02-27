@@ -37,7 +37,7 @@ namespace Jekbot.Systems
 
         private void SetNextTick()
         {
-            tick.Change(Instance.BotConfig.TickMilliseconds, Timeout.Infinite);
+            tick.Change(Program.BotConfig.TickMilliseconds, Timeout.Infinite);
         }
 
         public Orchestrator(DiscordSocketClient discord)

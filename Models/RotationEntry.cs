@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using Jekbot.TypeConverters;
+using System.Text.Json.Serialization;
 
 namespace Jekbot.Models
 {
@@ -21,5 +22,7 @@ namespace Jekbot.Models
         public bool Skip { get; init; }
 
         public Guid? TrackedEventKey { get; init; }
+
+        public int Order { get; init; }
     }
 }

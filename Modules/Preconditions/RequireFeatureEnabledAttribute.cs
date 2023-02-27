@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Jekbot.Models;
 
 namespace Jekbot.Modules.Preconditions
 {
@@ -14,29 +15,25 @@ namespace Jekbot.Modules.Preconditions
         /// A command or group with this attribute will require Jekbot to have a role called `Jekbot.{Name}` in order to run
         /// </summary>
         /// <param name="name"></param>
-        public RequireFeatureEnabledAttribute(string name)
+        public RequireFeatureEnabledAttribute(FeatureId id)
         {
-            _name = $"Jekbot.{name}";
+            featureId = id;
         }
 
         public override async Task<PreconditionResult> CheckRequirementsAsync(IInteractionContext context, ICommandInfo commandInfo, IServiceProvider services)
         {
             if (context.User is SocketGuildUser gUser)
             {
-                if (await context.Guild.GetCurrentUserAsync().ConfigureAwait(false) is SocketGuildUser botUser)
-                {
-                    if (botUser.Roles.Any(r => r.Name == _name))
-                        return PreconditionResult.FromSuccess();
-                    else
-                        return PreconditionResult.FromError($"Feature not enabled; Jekbot is missing the`{_name}` role.");
-                }
+                var instance = Instance.Get(context.Guild.Id);
+                if (instance.IsFeatureEnabled(featureId))
+                    return PreconditionResult.FromSuccess();
                 else
-                    return PreconditionResult.FromError("Couldn't get the bot user");
+                    return PreconditionResult.FromError($"The {featureId} feature is not enabled.");
             }
             else
                 return PreconditionResult.FromError("You must be in a guild to run this command.");
         }
 
-        private readonly string _name;
+        private readonly FeatureId featureId;
     }
 }

@@ -1,4 +1,5 @@
-﻿using Discord.Interactions;
+﻿using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using Jekbot.Utility;
 using Microsoft.Extensions.Logging;
@@ -50,7 +51,10 @@ public class CommandHandler
     {
         if (arg3 is PreconditionResult result)
         {
-            await arg2.Interaction.RespondAsync(result.ErrorReason);
+            await arg2.Interaction.RespondAsync(embed: new EmbedBuilder()
+                .WithColor(Color.Red)
+                .WithDescription(result.ErrorReason)
+                .Build());
         }
     }
 

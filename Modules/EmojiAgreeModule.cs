@@ -16,6 +16,9 @@ public class EmojiAgreeModule : InteractionModuleBase<SocketInteractionContext>
 
     private async Task Discord_ReactionRemoved(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
     {
+        if (channel.Value is IGuildChannel gc && !Instance.Get(gc.GuildId).IsFeatureEnabled(Models.FeatureId.EmojiAgreement))
+            return;
+
         var msg = await message.GetOrDownloadAsync();
         if (msg.Reactions.TryGetValue(reaction.Emote, out var value))
         {
@@ -26,6 +29,9 @@ public class EmojiAgreeModule : InteractionModuleBase<SocketInteractionContext>
 
     private async Task Discord_ReactionAdded(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
     {
+        if (channel.Value is IGuildChannel gc && !Instance.Get(gc.GuildId).IsFeatureEnabled(Models.FeatureId.EmojiAgreement))
+            return;
+
         var msg = await message.GetOrDownloadAsync();
         await msg.AddReactionAsync(reaction.Emote);
     }

@@ -8,15 +8,42 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Microsoft.Extensions.Logging;
 using Jekbot.Utility;
+using Jekbot.Models;
 
 namespace Jekbot;
 
 public class Program
 {
+    public static ConfigFile BotConfig { get; } = ConfigFile.Prepare();
+
     static void Main(string[] args)
     {
         if (args.Any())
             Directory.SetCurrentDirectory(args[0]);
+
+        //var db = new Database("Test");
+        //db.LoadPersistentData("831323402211426314");
+        //db.DeleteAll<PinnedMessage>();
+
+        //db.Insert(new PinnedMessage { UniqueName = "Jake" });
+        //db.Insert(new PinnedMessage { UniqueName = "Ruby" });
+        //var pinsQuery = db.Select<PinnedMessage>()
+        //    .OrderBy(x => x.DiscordChannelId)
+        //    .Where(x => x.UniqueName.StartsWith("R"))
+        //    .ToEnumerable();
+
+        //foreach (var pin in pinsQuery)
+        //    Console.WriteLine(pin.UniqueName);
+
+        //var jake = db.Select<PinnedMessage>()
+        //    .Where(x => x.UniqueName.StartsWith("J"))
+        //    .Single() with
+        //{ DiscordChannelId = 1 };
+
+        //db.Update(jake);
+
+        //foreach (var x in db.Select<PinnedMessage>().ToEnumerable())
+        //    Console.WriteLine($"{x.UniqueName}, {x.DiscordChannelId}");
 
         RunAsync().GetAwaiter().GetResult();
     }
@@ -30,7 +57,7 @@ public class Program
         var handler = services.GetRequiredService<CommandHandler>();
 
         await handler.Initialize();
-        await client.LoginAsync(TokenType.Bot, Instance.BotConfig.Token);
+        await client.LoginAsync(TokenType.Bot, BotConfig.Token);
         await client.StartAsync();
 
         //  load everything upfront

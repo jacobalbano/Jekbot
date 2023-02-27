@@ -6,17 +6,16 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Jekbot.Utility
+namespace Jekbot.Utility;
+
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public class ForceInitializationAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    public class ForceInitializationAttribute : Attribute
+    public static void DiscoverAndInitialize(ServiceProvider services)
     {
-        public static void DiscoverAndInitialize(ServiceProvider services)
-        {
-            foreach (var t in typeof(ForceInitializationAttribute)
-                .Assembly.GetExportedTypes()
-                .Where(x => x.IsClass && !x.IsAbstract && x.GetCustomAttribute<ForceInitializationAttribute>() != null))
-                services.GetRequiredService(t);
-        }
+        foreach (var t in typeof(ForceInitializationAttribute)
+            .Assembly.GetExportedTypes()
+            .Where(x => x.IsClass && !x.IsAbstract && x.GetCustomAttribute<ForceInitializationAttribute>() != null))
+            services.GetRequiredService(t);
     }
 }

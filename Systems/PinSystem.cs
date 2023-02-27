@@ -24,16 +24,21 @@ namespace Jekbot.Systems
 
             if (uniquePinId != null)
             {
-                if (instance.PinnedMessages.FirstOrDefault(x => x.UniqueName == uniquePinId) is PinnedMessage lastPin)
+                var lastPin = instance.Database
+                    .Select<PinnedMessage>()
+                    .Where(x => x.UniqueName == uniquePinId)
+                    .FirstOrDefault();
+
+                if (lastPin != null)
                 {
                     var lastMessage = await GetMessage(guild, lastPin.DiscordChannelId, lastPin.DiscordMessageId);
                     if (lastMessage != null && lastMessage.IsPinned)
                         await lastMessage.UnpinAsync();
 
-                    instance.PinnedMessages.Remove(lastPin);
+                    instance.Database.Delete(lastPin);
                 }
 
-                instance.PinnedMessages.Add(new() { DiscordChannelId = discordChannelId, DiscordMessageId = discordMessageId, UniqueName = uniquePinId });
+                instance.Database.Insert<PinnedMessage>(new() { DiscordChannelId = discordChannelId, DiscordMessageId = discordMessageId, UniqueName = uniquePinId });
             }
         }
 
@@ -44,7 +49,6 @@ namespace Jekbot.Systems
                 return null;
 
             return await channel.GetMessageAsync(discordMessageId) as IUserMessage;
-
         }
 
         public PinSystem(DiscordSocketClient discord)

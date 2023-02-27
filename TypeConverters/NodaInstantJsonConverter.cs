@@ -1,10 +1,11 @@
-﻿using NodaTime;
+﻿using Microsoft.Data.Sqlite;
+using NodaTime;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Jekbot.TypeConverters;
 
-internal class NodaInstantConverter : JsonConverter<Instant>
+public class NodaInstantJsonConverter : JsonConverter<Instant>
 {
     public override Instant Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -16,3 +17,4 @@ internal class NodaInstantConverter : JsonConverter<Instant>
         writer.WriteNumberValue(value.ToUnixTimeTicks());
     }
 }
+
