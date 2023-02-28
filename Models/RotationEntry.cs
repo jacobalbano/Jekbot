@@ -21,6 +21,7 @@ namespace Jekbot.Models
         public ulong? DiscordUserId { get; init; }
         public bool Skip { get; init; }
 
+        [Indexed]
         public Guid? TrackedEventKey { get; init; }
 
         public int Order { get; init; }

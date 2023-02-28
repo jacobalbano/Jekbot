@@ -26,8 +26,7 @@ namespace Jekbot.Systems
             {
                 var lastPin = instance.Database
                     .Select<PinnedMessage>()
-                    .Where(x => x.UniqueName == uniquePinId)
-                    .FirstOrDefault();
+                    .FirstOrDefault(x => x.UniqueName == uniquePinId);
 
                 if (lastPin != null)
                 {

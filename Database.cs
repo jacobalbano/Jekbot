@@ -1,5 +1,7 @@
 ﻿using Jekbot.Models;
 using LiteDB;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Jekbot;
 
@@ -57,6 +59,7 @@ public class Database
     private ILiteCollection<T> Establish<T>()
     {
         var collection = db.GetCollection<T>();
+        Optimizer<T>.Run(collection);
         return collection;
     }
 
@@ -81,6 +84,28 @@ public class Database
         }
 
         private readonly Database database;
+    }
+
+    private class Optimizer<T>
+    {
+        public static void Run(ILiteCollection<T> collection)
+        {
+            if (hasRun) return;
+
+            foreach (var propInfo in typeof(T)
+                .GetProperties()
+                .Where(x => x.GetCustomAttribute<IndexedAttribute>() != null))
+            {
+                var param = Expression.Parameter(typeof(T));
+                var convert = Expression.TypeAs(Expression.Property(param, propInfo), typeof(object));
+                var getMethod = Expression.Lambda<Func<T, object>>(convert, param);
+                collection.EnsureIndex(getMethod);
+            }
+
+            hasRun = true;
+        }
+
+        private static bool hasRun = false;
     }
 
     private readonly LiteDatabase db;

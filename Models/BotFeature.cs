@@ -10,11 +10,13 @@ namespace Jekbot.Models
     {
         EmojiAgreement,
         GameNight,
-        EventNotify
+        EventNotify,
+        UserPins
     }
 
     public record class BotFeature : ModelBase
     {
+        [Indexed]
         public FeatureId Feature { get; init; }
         public bool Enabled { get; init; }
     }

@@ -47,7 +47,12 @@ public class Program
         new ServiceCollection()
         .DiscoverTaggedSingletons()
         .AddSingleton<DiscordSocketClient>()
-        .AddSingleton(new DiscordSocketConfig { LogGatewayIntentWarnings = false })
+        .AddSingleton(new DiscordSocketConfig {
+            LogGatewayIntentWarnings = false,
+#if !DEBUG
+            LogLevel = LogSeverity.Error
+#endif
+        })
         .AddSingleton<InteractionService>()
         .AddLogging(x => ConfigureLogging(x))
         .BuildServiceProvider();

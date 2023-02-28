@@ -11,6 +11,7 @@ namespace Jekbot.Models
         public ulong DiscordChannelId { get; init; }
         public ulong DiscordMessageId { get; init; }
 
+        [Indexed]
         public string UniqueName { get; init; }
     }
 }

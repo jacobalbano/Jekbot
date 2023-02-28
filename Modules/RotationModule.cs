@@ -6,10 +6,9 @@ using Jekbot.Models;
 using Jekbot.Modules.Preconditions;
 using Jekbot.Systems;
 using Jekbot.TypeConverters;
+using Jekbot.Utility;
 using Microsoft.Extensions.Logging;
-using NodaTime;
 using System.Text;
-using System.Text.Json.Serialization;
 
 namespace Jekbot.Modules;
 
@@ -47,8 +46,7 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
         var instance = Instance.Get(arg.Guild.Id);
         var trackedEvent = instance.Database
             .Select<TrackedEvent>()
-            .Where(x => x.DiscordEventId == arg.Id)
-            .FirstOrDefault();
+            .FirstOrDefault(x => x.DiscordEventId == arg.Id);
 
         if (trackedEvent == null) return;
 
@@ -79,9 +77,9 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
         public string? ScheduledTime { get; set; }
         public string? SchedulingRelativeToTz { get; set; }
 
-        internal bool IsConfigured()
+        public bool IsConfigured()
         {
-            return !(SchedulingRelativeToTz == null || ScheduledTime == null || ScheduledDay == null);
+            return SchedulingRelativeToTz != null && ScheduledTime != null && ScheduledDay != null && ChannelId != null;
         }
     }
 
@@ -301,7 +299,7 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
             var instance = Context.GetInstance();
             using var rotation = new RotationList(instance);
 
-            if (rotation.FirstOrDefault() is RotationEntry next && next.Type == RotationEntryType.Postponment )
+            if (rotation.FirstOrDefault() is RotationEntry next && next.Type == RotationEntryType.Postponment)
                 return;
 
             rotation.Insert(0, new RotationEntry { Type = RotationEntryType.Postponment });
@@ -330,9 +328,22 @@ public class RotationModule : InteractionModuleBase<SocketInteractionContext>
 
             await rotationSystem.RefreshEvents(instance, rotation);
             await rotationSystem.PostRotationMessage(instance, rotation);
-            await FollowupAsync("Advanced");
+            await FollowupAsync("Rotation advanced");
         }
 #endif
+
+        [RequireOwner]
+        [SlashCommand("refresh", "Refresh rotation")]
+        public async Task RefreshEvents()
+        {
+            await DeferAsync();
+
+            var instance = Context.GetInstance();
+            using var rotation = new RotationList(instance);
+            await rotationSystem.RefreshEvents(instance, rotation);
+            await rotationSystem.PostRotationMessage(instance, rotation);
+            await FollowupAsync("Rotation refreshed");
+        }
 
         public ConfigModule(RotationSystem rotation)
         {

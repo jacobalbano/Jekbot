@@ -47,8 +47,7 @@ namespace Jekbot.Systems
                 if (rot.TrackedEventKey != null)
                 {
                     var trackedEvent = instance.Database.Select<TrackedEvent>()
-                        .Where(x => x.Key == key)
-                        .FirstOrDefault();
+                        .FirstOrDefault(x => x.Key == key);
 
                     if (trackedEvent != null)
                     {
@@ -84,7 +83,8 @@ namespace Jekbot.Systems
                 $"Game Night - {user.Username}",
                 nextGameNight.ToDateTimeUtc(),
                 GuildScheduledEventType.Voice,
-                channelId: guild.VoiceChannels.FirstOrDefault()?.Id
+                channelId: guild.VoiceChannels.FirstOrDefault()?.Id,
+                description: GuildEventUtility.CreateEventDescription(new List<string>(), "")
             );
 
             var newEvent = new TrackedEvent { DiscordEventId = guildEvent.Id };
@@ -150,17 +150,17 @@ namespace Jekbot.Systems
                 {
                     var trackedEvent = instance.Database
                         .Select<TrackedEvent>()
-                        .Where(x => x.Key == next.TrackedEventKey)
-                        .FirstOrDefault();
+                        .FirstOrDefault(x => x.Key == next.TrackedEventKey);
 
                     if (trackedEvent != null)
                     {
-                        sb.AppendLine("Please RSVP below to help us pick what to play next time!");
+                        sb.AppendLine("Please click 'Interested' or react with ❌ to show your availability!");
                         sb.AppendLine(GuildEventUtility.CreateEventLink(instance.Id, trackedEvent.DiscordEventId));
                     }
                 }
 
                 var message = await channel.SendMessageAsync(sb.ToString());
+                await message.AddReactionAsync(new Emoji("❌"));
 
                 try
                 {
