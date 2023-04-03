@@ -27,5 +27,14 @@ public class InfrequentActor
         return action();
     }
 
+    public void Act(Action action)
+    {
+        Act(() =>
+        {
+            action();
+            return Task.CompletedTask;
+        });
+    }
+
     private Instant nextInstant;
 }

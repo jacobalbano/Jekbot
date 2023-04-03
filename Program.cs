@@ -30,7 +30,7 @@ public class Program
         ForceInitializationAttribute.DiscoverAndInitialize(services);
 
         var client = services.GetRequiredService<DiscordSocketClient>();
-        var handler = services.GetRequiredService<CommandHandler>();
+        var handler = services.GetRequiredService<CommandHandlerService>();
 
         await handler.Initialize();
         await client.LoginAsync(TokenType.Bot, BotConfig.Token);
@@ -46,6 +46,7 @@ public class Program
     static ServiceProvider ConfigureServices() =>
         new ServiceCollection()
         .DiscoverTaggedSingletons()
+        .DiscoverTaggedInterfaces()
         .AddSingleton<DiscordSocketClient>()
         .AddSingleton(new DiscordSocketConfig {
             LogGatewayIntentWarnings = false,

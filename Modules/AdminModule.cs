@@ -79,6 +79,5 @@ namespace Jekbot.Modules
 
             await FollowupAsync(embed: builder.Build());
         }
-
     }
 }

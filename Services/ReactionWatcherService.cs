@@ -2,19 +2,12 @@
 using Discord.Interactions;
 using Discord.Interactions.Builders;
 using Discord.WebSocket;
-using Jekbot.Systems.ReactionHandlers;
+using Jekbot.Services.ReactionHandlers;
 
 namespace Jekbot.Modules;
 
-public class ReactionWatcherModule : InteractionModuleBase<SocketInteractionContext>
+public class ReactionWatcherService
 {
-    public override void Construct(ModuleBuilder builder, InteractionService commandService)
-    {
-        base.Construct(builder, commandService);
-        discord.ReactionAdded += Discord_ReactionAdded;
-        discord.ReactionRemoved += Discord_ReactionRemoved;
-    }
-
     private Task Discord_ReactionRemoved(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)
     {
         if (!handlers.TryGetValue(reaction.Emote, out var handler))
@@ -24,7 +17,7 @@ public class ReactionWatcherModule : InteractionModuleBase<SocketInteractionCont
         {
             var msgVal = await message.GetOrDownloadAsync();
             var chnlVal = await channel.GetOrDownloadAsync();
-            await handler.OnReactionRemoved(msgVal, chnlVal, reaction, discord);
+            return handler.OnReactionRemoved(msgVal, chnlVal, reaction, discord);
         });
     }
 
@@ -33,17 +26,21 @@ public class ReactionWatcherModule : InteractionModuleBase<SocketInteractionCont
         if (!handlers.TryGetValue(reaction.Emote, out var handler))
             handler = defaultHandler;
 
-        return Task.Run(async () =>
+        Task.Run(async () =>
         {
             var msgVal = await message.GetOrDownloadAsync();
             var chnlVal = await channel.GetOrDownloadAsync();
-            await handler.OnReactionAdded(msgVal, chnlVal, reaction, discord);
+            return handler.OnReactionAdded(msgVal, chnlVal, reaction, discord);
         });
+
+        return Task.CompletedTask;
     }
 
-    public ReactionWatcherModule(DiscordSocketClient discord)
+    public ReactionWatcherService(DiscordSocketClient discord)
     {
         this.discord = discord;
+        discord.ReactionAdded += Discord_ReactionAdded;
+        discord.ReactionRemoved += Discord_ReactionRemoved;
     }
 
     private readonly DiscordSocketClient discord;

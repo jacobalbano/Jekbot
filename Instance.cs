@@ -24,9 +24,10 @@ namespace Jekbot
         public void SetFeatureEnabled(FeatureId featureId, bool enabled)
         {
             features[featureId] = enabled;
-            Database.InsertOrUpdate(Database.Select<BotFeature>()
+            using var s = Database.BeginSession();
+            s.InsertOrUpdate((Database.Select<BotFeature>()
                 .Where(x => x.Feature == featureId)
-                .SingleOrDefault() ?? new() { Feature = featureId, Enabled = enabled });
+                .SingleOrDefault() ?? new() { Feature = featureId }) with { Enabled = enabled });
         }
 
         #region implementation
@@ -37,7 +38,6 @@ namespace Jekbot
             foreach (var item in Database.Select<BotFeature>().ToEnumerable())
                 features[item.Feature] = item.Enabled;
         }
-
 
         private static Instance Establish(ulong id)
         {

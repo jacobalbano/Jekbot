@@ -6,14 +6,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Jekbot.Modules
 {
-    public class MessageProxyModule : InteractionModuleBase<SocketInteractionContext>
+    public class MessageProxyService
     {
-        public override void Construct(ModuleBuilder builder, InteractionService commandService)
-        {
-            base.Construct(builder, commandService);
-            discord.MessageReceived += Discord_MessageReceived;
-        }
-
         private async Task Discord_MessageReceived(SocketMessage message)
         {
             //  only pay attention to DMs
@@ -74,10 +68,12 @@ namespace Jekbot.Modules
             }
         }
 
-        public MessageProxyModule(DiscordSocketClient discord, ILogger<MessageProxyModule> logger)
+        public MessageProxyService(DiscordSocketClient discord, ILogger<MessageProxyService> logger)
         {
             this.discord = discord;
             this.logger = logger;
+
+            discord.MessageReceived += Discord_MessageReceived;
             Owner  = new Lazy<Task<IUser>>(async() =>
             {
                 var info = await discord.GetApplicationInfoAsync();
@@ -87,7 +83,7 @@ namespace Jekbot.Modules
 
         private readonly DiscordSocketClient discord;
         private readonly Lazy<Task<IUser>> Owner;
-        private readonly ILogger<MessageProxyModule> logger;
+        private readonly ILogger<MessageProxyService> logger;
 
         //  rudimentary security to make sure we find the right embed
         //  secret will change every time the bot restarts

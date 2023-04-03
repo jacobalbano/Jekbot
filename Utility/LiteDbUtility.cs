@@ -14,5 +14,10 @@ namespace Jekbot.Utility
         {
             return self.Where(predicate).FirstOrDefault();
         }
+
+        public static bool Any<T>(this ILiteQueryable<T> self)
+        {
+            return self.Count() > 0;
+        }
     }
 }

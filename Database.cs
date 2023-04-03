@@ -10,20 +10,17 @@ public class Database
     public Database(string directory, string dbFilename)
     {
         db = new LiteDatabase(Path.Combine(directory, $"{dbFilename}.db"));
-        SetupCollectionNameResolver(ref db.Mapper.ResolveCollectionName);
+        db.Mapper.ResolveCollectionName = CollectionNameResolver;
         db.Checkpoint();
     }
 
-    private static void SetupCollectionNameResolver(ref Func<Type, string> resolveCollectionName)
+    private static string CollectionNameResolver(Type t)
     {
-        var old = resolveCollectionName;
-        resolveCollectionName = (t) => {
-            var result = old(t);
-            for (var decl = t.DeclaringType; decl != null; decl = decl.DeclaringType)
-                result = $"{old(decl)}_{result}";
+        var result = t.Name;
+        for (var decl = t.DeclaringType; decl != null; decl = decl.DeclaringType)
+            result = $"{decl.Name}_{result}";
 
-            return result;
-        };
+        return result;
     }
 
     public ILiteQueryable<T> Select<T>()
@@ -31,30 +28,12 @@ public class Database
         return Establish<T>().Query();
     }
 
-    public void Insert<T>(T item)
+    public SingletonWrapper<T> GetSingleton<T>() where T : ModelBase, new()
     {
-        Establish<T>().Insert(item);
+        return new SingletonWrapper<T>(this);
     }
 
-    public void InsertOrUpdate<T>(T item)
-    {
-        Establish<T>().Upsert(item);
-    }
-
-    public bool Delete<T>(T item) where T : ModelBase
-    {
-        return Establish<T>().Delete(item.Key);
-    }
-
-    public int DeleteAll<T>() where T : ModelBase
-    {
-        return Establish<T>().DeleteAll();
-    }
-
-    public bool Update<T>(T item) where T : ModelBase
-    {
-        return Establish<T>().Update(item);
-    }
+    public ISession BeginSession() => new SessionImpl(this);
 
     private ILiteCollection<T> Establish<T>()
     {
@@ -63,9 +42,61 @@ public class Database
         return collection;
     }
 
-    public SingletonWrapper<T> GetSingleton<T>() where T : ModelBase, new()
+    public interface ISession : IDisposable
     {
-        return new SingletonWrapper<T>(this);
+        public T Insert<T>(T item);
+        public T InsertOrUpdate<T>(T item);
+        public bool Delete<T>(T item) where T : ModelBase;
+        public int DeleteAll<T>() where T : ModelBase;
+        public bool Update<T>(T item) where T : ModelBase;
+        public ILiteQueryable<T> Select<T>();
+        public SingletonWrapper<T> GetSingleton<T>() where T : ModelBase, new();
+    }
+
+    private class SessionImpl : ISession
+    {
+        public ILiteQueryable<T> Select<T>() => owner.Select<T>();
+        public SingletonWrapper<T> GetSingleton<T>() where T : ModelBase, new() => owner.GetSingleton<T>();
+
+        public SessionImpl(Database db)
+        {
+            owner = db;
+        }
+
+        public T Insert<T>(T item)
+        {
+            owner.Establish<T>().Insert(item);
+            return item;
+        }
+
+        public T InsertOrUpdate<T>(T item)
+        {
+            owner.Establish<T>().Upsert(item);
+            return item;
+        }
+
+        public bool Delete<T>(T item) where T : ModelBase
+        {
+            return owner.Establish<T>().Delete(item.Key);
+        }
+
+        public int DeleteAll<T>() where T : ModelBase
+        {
+            return owner.Establish<T>().DeleteAll();
+        }
+
+        public bool Update<T>(T item) where T : ModelBase
+        {
+            return owner.Establish<T>().Update(item);
+        }
+
+        public void Dispose()
+        {
+            if (Program.BotConfig.CheckpointEveryMutation)
+                owner.db.Checkpoint();
+        }
+
+        private readonly Database owner;
     }
 
     public class SingletonWrapper<T> : IDisposable where T : ModelBase, new()
@@ -74,16 +105,17 @@ public class Database
 
         public SingletonWrapper(Database database)
         {
-            this.database = database;
+            owner = database;
             Value = database.Select<T>().SingleOrDefault() ?? new T();
         }
 
         public void Dispose()
         {
-            database.InsertOrUpdate(Value);
+            using var s = owner.BeginSession();
+            s.InsertOrUpdate(Value);
         }
 
-        private readonly Database database;
+        private readonly Database owner;
     }
 
     private class Optimizer<T>
