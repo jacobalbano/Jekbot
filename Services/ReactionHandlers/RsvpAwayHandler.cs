@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Jekbot.Models;
 using Jekbot.Utility;
 using System;
 using System.Collections.Generic;
@@ -37,8 +38,21 @@ internal class RsvpAwayHandler : IReactionHandler
         var reactionUsers = (await message.GetReactionUsersAsync(Emote, 100)
             .FlattenAsync())
             .Where(x => !x.IsBot)
-            .Select(x => x.Mention)
+            .Select(x => x.Id)
             .ToList();
+
+        //var instance = Instance.Get(gc.GuildId);
+        //var trackedEvent = instance.Database
+        //    .Select<TrackedEvent>()
+        //    .FirstOrDefault(x => x.DiscordEventId == guildEvent.Id);
+        //if (trackedEvent != null)
+        //{
+        //    using var s = instance.Database.BeginSession();
+        //    s.InsertOrUpdate((s.Select<RsvpAway>()
+        //        .FirstOrDefault(x => x.TrackedEventKey == trackedEvent.Key)
+        //        ?? new RsvpAway { TrackedEventKey = trackedEvent.Key })
+        //        with { UserIds = reactionUsers });
+        //}
 
         await guildEvent.ModifyAsync(props => props.Description = GuildEventUtility.CreateEventDescription(reactionUsers, guildEvent.Description ?? string.Empty));
     }

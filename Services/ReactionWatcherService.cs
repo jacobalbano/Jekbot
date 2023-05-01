@@ -3,9 +3,11 @@ using Discord.Interactions;
 using Discord.Interactions.Builders;
 using Discord.WebSocket;
 using Jekbot.Services.ReactionHandlers;
+using Jekbot.Utility;
 
 namespace Jekbot.Modules;
 
+[AutoDiscoverSingletonService, ForceInitialization]
 public class ReactionWatcherService
 {
     private Task Discord_ReactionRemoved(Cacheable<IUserMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel, SocketReaction reaction)

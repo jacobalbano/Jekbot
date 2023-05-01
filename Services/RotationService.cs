@@ -133,7 +133,7 @@ public class RotationService
             nextGameNight.ToDateTimeUtc(),
             GuildScheduledEventType.Voice,
             channelId: guild.VoiceChannels.FirstOrDefault()?.Id,
-            description: GuildEventUtility.CreateEventDescription(new List<string>(), "")
+            description: GuildEventUtility.CreateEventDescription(new List<ulong>(), "")
         );
 
         var nextEvent = new TrackedEvent { DiscordEventId = guildEvent.Id };

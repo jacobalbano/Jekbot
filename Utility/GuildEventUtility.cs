@@ -24,7 +24,7 @@ namespace Jekbot.Utility
                 && ulong.TryParse(match.Groups[2].Value, out discordEventId);
         }
 
-        internal static string CreateEventDescription(List<string> reactionUsers, string previousDescription)
+        internal static string CreateEventDescription(IReadOnlyList<ulong> reactionUsers, string previousDescription)
         {
             var sb = new StringBuilder();
             if (!previousDescription.Contains(Delimiter))
@@ -38,7 +38,7 @@ namespace Jekbot.Utility
 
             sb.AppendLine(Delimiter);
             foreach (var user in reactionUsers)
-                sb.AppendLine($"{user} N/A");
+                sb.AppendLine($"{MentionUtils.MentionUser(user)} N/A");
 
             return sb.ToString();
         }
